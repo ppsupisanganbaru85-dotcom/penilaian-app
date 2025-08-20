@@ -1,0 +1,1783 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistem Penilaian PPSU PISBAR</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+        body { font-family: 'Inter', sans-serif; }
+        .table-scroll { max-height: 70vh; overflow-y: auto; }
+        .sticky-header { position: sticky; top: 0; z-index: 10; }
+        .glass-effect { backdrop-filter: blur(10px); background: rgba(255, 255, 255, 0.9); }
+        .gradient-bg { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
+        .card-hover { transition: all 0.3s ease; }
+        .card-hover:hover { transform: translateY(-4px); box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1); }
+        @media (max-width: 640px) {
+            .mobile-scroll { overflow-x: auto; }
+            .mobile-table { min-width: 800px; }
+        }
+    </style>
+</head>
+<body class="bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 min-h-screen">
+    <!-- Mobile Header -->
+    <div class="lg:hidden gradient-bg text-white p-4 sticky top-0 z-50">
+        <div class="flex items-center justify-between">
+            <div>
+                <h1 class="text-xl font-bold">PPSU PISBAR</h1>
+                <p class="text-sm opacity-90">Sistem Penilaian</p>
+            </div>
+            <button onclick="toggleMobileMenu()" class="p-2 rounded-lg bg-white/20">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
+                </svg>
+            </button>
+        </div>
+    </div>
+
+    <!-- Mobile Menu -->
+    <div id="mobileMenu" class="lg:hidden hidden bg-white shadow-lg border-b">
+        <div class="grid grid-cols-2 gap-2 p-4">
+            <button onclick="showTab('dashboard'); toggleMobileMenu()" class="p-3 text-center rounded-lg bg-blue-50 text-blue-600 font-medium">
+                📊 Dashboard Publik
+            </button>
+            <button onclick="showAdminLogin(); toggleMobileMenu()" class="p-3 text-center rounded-lg bg-red-50 text-red-600 font-medium">
+                🔐 Area Admin
+            </button>
+        </div>
+    </div>
+
+    <!-- Admin Mobile Menu (Hidden initially) -->
+    <div id="adminMobileMenu" class="lg:hidden hidden bg-white shadow-lg border-b">
+        <div class="grid grid-cols-2 gap-2 p-4">
+            <button onclick="showTab('dashboard'); toggleMobileMenu()" class="p-3 text-center rounded-lg bg-orange-50 text-orange-600 font-medium">
+                📊 Dashboard
+            </button>
+            <button onclick="showTab('rekap'); toggleMobileMenu()" class="p-3 text-center rounded-lg bg-blue-50 text-blue-600 font-medium">
+                👥 Rekap PPSU
+            </button>
+            <button onclick="showTab('input'); toggleMobileMenu()" class="p-3 text-center rounded-lg bg-green-50 text-green-600 font-medium">
+                📝 Input Data
+            </button>
+            <button onclick="showTab('performance'); toggleMobileMenu()" class="p-3 text-center rounded-lg bg-purple-50 text-purple-600 font-medium">
+                📋 Kinerja
+            </button>
+        </div>
+    </div>
+
+    <div class="container mx-auto px-3 lg:px-6 py-4 lg:py-8">
+        <!-- Desktop Header -->
+        <div class="hidden lg:block glass-effect rounded-2xl shadow-xl p-8 mb-8 border border-white/20">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h1 class="text-4xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent mb-2">
+                        Sistem Penilaian PPSU PISBAR
+                    </h1>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <div class="text-right">
+                        <p class="text-sm text-gray-500">Total PPSU</p>
+                        <p class="text-2xl font-bold text-blue-600" id="headerTotalPPSU">43</p>
+                    </div>
+                    <div class="w-16 h-16 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl flex items-center justify-center">
+                        <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path>
+                        </svg>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Navigation Tabs - Desktop -->
+        <div class="hidden lg:block glass-effect rounded-2xl shadow-xl mb-8 border border-white/20">
+            <div class="flex overflow-x-auto">
+                <button onclick="showTab('dashboard')" id="dashboardTab" class="px-8 py-6 font-semibold text-blue-600 border-b-3 border-blue-600 whitespace-nowrap flex items-center space-x-2 transition-all">
+                    <span class="text-xl">📊</span>
+                    <span>Dashboard Publik</span>
+                </button>
+                <button onclick="showAdminLogin()" id="adminTab" class="px-8 py-6 font-semibold text-gray-500 hover:text-blue-600 whitespace-nowrap flex items-center space-x-2 transition-all">
+                    <span class="text-xl">🔐</span>
+                    <span>Area Admin</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- Admin Navigation (Hidden initially) -->
+        <div id="adminNavigation" class="hidden lg:block glass-effect rounded-2xl shadow-xl mb-8 border border-white/20">
+            <div class="flex overflow-x-auto">
+                <button onclick="showTab('dashboard')" id="dashboardTabAdmin" class="px-8 py-6 font-semibold text-gray-500 hover:text-blue-600 whitespace-nowrap flex items-center space-x-2 transition-all">
+                    <span class="text-xl">📊</span>
+                    <span>Dashboard</span>
+                </button>
+                <button onclick="showTab('rekap')" id="rekapTab" class="px-8 py-6 font-semibold text-blue-600 border-b-3 border-blue-600 whitespace-nowrap flex items-center space-x-2 transition-all">
+                    <span class="text-xl">👥</span>
+                    <span>Rekap PPSU</span>
+                </button>
+                <button onclick="showTab('input')" id="inputTab" class="px-8 py-6 font-semibold text-gray-500 hover:text-blue-600 whitespace-nowrap flex items-center space-x-2 transition-all">
+                    <span class="text-xl">📝</span>
+                    <span>Input Data</span>
+                </button>
+                <button onclick="showTab('performance')" id="performanceTab" class="px-8 py-6 font-semibold text-gray-500 hover:text-blue-600 whitespace-nowrap flex items-center space-x-2 transition-all">
+                    <span class="text-xl">📋</span>
+                    <span>Buku Kinerja</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- Rekap PPSU Tab -->
+        <div id="rekapSection" class="glass-effect rounded-2xl shadow-xl p-4 lg:p-8 mb-8 border border-white/20">
+            <div class="flex flex-col lg:flex-row lg:justify-between lg:items-center mb-6 space-y-4 lg:space-y-0">
+                <h2 class="text-2xl lg:text-3xl font-bold text-gray-800">Rekap Lengkap Petugas PPSU PISBAR</h2>
+                <div class="flex flex-col sm:flex-row gap-3">
+                    <button onclick="showAddNewPPSUModal()" class="bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white px-6 py-3 rounded-xl font-semibold transition-all shadow-lg hover:shadow-xl flex items-center justify-center space-x-2 min-w-[160px]">
+                        <span>➕</span>
+                        <span>Tambah PPSU Baru</span>
+                    </button>
+                    <button onclick="generateAllPPSU()" class="bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white px-6 py-3 rounded-xl font-semibold transition-all shadow-lg hover:shadow-xl flex items-center justify-center space-x-2 min-w-[160px]">
+                        <span>🔄</span>
+                        <span class="hidden sm:inline">Generate Semua Data</span>
+                        <span class="sm:hidden">Generate</span>
+                    </button>
+                    <button onclick="exportRekapExcel()" class="bg-gradient-to-r from-purple-500 to-purple-600 hover:from-purple-600 hover:to-purple-700 text-white px-6 py-3 rounded-xl font-semibold transition-all shadow-lg hover:shadow-xl flex items-center justify-center space-x-2 min-w-[140px]">
+                        <span>📊</span>
+                        <span class="hidden sm:inline">Export Excel</span>
+                        <span class="sm:hidden">Excel</span>
+                    </button>
+                    <button onclick="exportRekapCSV()" class="bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white px-6 py-3 rounded-xl font-semibold transition-all shadow-lg hover:shadow-xl flex items-center justify-center space-x-2 min-w-[140px]">
+                        <span>📋</span>
+                        <span class="hidden sm:inline">Export CSV</span>
+                        <span class="sm:hidden">CSV</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Filter dan Search -->
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-6">
+                <div>
+                    <label class="block text-sm font-semibold text-gray-700 mb-2">🔍 Cari Nama PPSU</label>
+                    <input type="text" id="searchPPSU" placeholder="Ketik nama untuk mencari..." class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all" onkeyup="filterPPSU()">
+                </div>
+                <div>
+                    <label class="block text-sm font-semibold text-gray-700 mb-2">📊 Filter Status</label>
+                    <select id="filterStatus" class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all" onchange="filterPPSU()">
+                        <option value="">Semua Status</option>
+                        <option value="Sangat Baik">Sangat Baik (≥80%)</option>
+                        <option value="Baik">Baik (70-79%)</option>
+                        <option value="Cukup">Cukup (60-69%)</option>
+                        <option value="Perlu Perbaikan">Perlu Perbaikan (<60%)</option>
+                        <option value="Belum Ada Data">Belum Ada Data</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm font-semibold text-gray-700 mb-2">🔄 Urutkan Berdasarkan</label>
+                    <select id="sortBy" class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all" onchange="sortPPSU()">
+                        <option value="nama">Nama (A-Z)</option>
+                        <option value="skor">Total Skor (Tertinggi)</option>
+                        <option value="kehadiran">Nilai Kehadiran</option>
+                        <option value="kinerja">Nilai Kinerja</option>
+                        <option value="perilaku">Nilai Perilaku</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Summary Statistics -->
+            <div class="grid grid-cols-2 lg:grid-cols-5 gap-3 lg:gap-6 mb-8">
+                <div class="bg-gradient-to-br from-blue-500 to-blue-600 text-white p-4 lg:p-6 rounded-xl text-center shadow-lg card-hover">
+                    <div class="text-2xl lg:text-3xl mb-2">👥</div>
+                    <h3 class="text-xs lg:text-sm font-semibold mb-1 opacity-90">Total PPSU</h3>
+                    <p class="text-xl lg:text-3xl font-bold" id="totalPPSUCount">43</p>
+                </div>
+                <div class="bg-gradient-to-br from-green-500 to-green-600 text-white p-4 lg:p-6 rounded-xl text-center shadow-lg card-hover">
+                    <div class="text-2xl lg:text-3xl mb-2">✅</div>
+                    <h3 class="text-xs lg:text-sm font-semibold mb-1 opacity-90">Sudah Input</h3>
+                    <p class="text-xl lg:text-3xl font-bold" id="inputPPSUCount">0</p>
+                </div>
+                <div class="bg-gradient-to-br from-yellow-500 to-yellow-600 text-white p-4 lg:p-6 rounded-xl text-center shadow-lg card-hover">
+                    <div class="text-2xl lg:text-3xl mb-2">⏳</div>
+                    <h3 class="text-xs lg:text-sm font-semibold mb-1 opacity-90">Belum Input</h3>
+                    <p class="text-xl lg:text-3xl font-bold" id="belumInputCount">43</p>
+                </div>
+                <div class="bg-gradient-to-br from-purple-500 to-purple-600 text-white p-4 lg:p-6 rounded-xl text-center shadow-lg card-hover">
+                    <div class="text-2xl lg:text-3xl mb-2">📈</div>
+                    <h3 class="text-xs lg:text-sm font-semibold mb-1 opacity-90">Rata-rata</h3>
+                    <p class="text-xl lg:text-3xl font-bold" id="avgScoreAll">0%</p>
+                </div>
+                <div class="bg-gradient-to-br from-red-500 to-red-600 text-white p-4 lg:p-6 rounded-xl text-center shadow-lg card-hover">
+                    <div class="text-2xl lg:text-3xl mb-2">⚠️</div>
+                    <h3 class="text-xs lg:text-sm font-semibold mb-1 opacity-90">Perlu Perbaikan</h3>
+                    <p class="text-xl lg:text-3xl font-bold" id="needImprovementCount">0</p>
+                </div>
+            </div>
+
+            <!-- PPSU Cards Grid -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 lg:gap-6 mb-8" id="ppsuCardsContainer">
+                <!-- Cards akan digenerate di sini -->
+            </div>
+
+            <!-- Detailed Table -->
+            <div class="mobile-scroll">
+                <div class="table-scroll border-2 border-gray-200 rounded-xl overflow-hidden shadow-lg">
+                    <table class="w-full text-sm mobile-table">
+                        <thead class="bg-gradient-to-r from-gray-50 to-gray-100 sticky-header">
+                            <tr>
+                                <th class="px-3 lg:px-4 py-4 text-left font-bold text-gray-700">No</th>
+                                <th class="px-3 lg:px-4 py-4 text-left font-bold text-gray-700">Nama PPSU</th>
+                                <th class="px-3 lg:px-4 py-4 text-left font-bold text-gray-700">Status Data</th>
+                                <th class="px-3 lg:px-4 py-4 text-left font-bold text-gray-700">Kehadiran</th>
+                                <th class="px-3 lg:px-4 py-4 text-left font-bold text-gray-700">Nilai Kehadiran</th>
+                                <th class="px-3 lg:px-4 py-4 text-left font-bold text-gray-700">Nilai Kinerja</th>
+                                <th class="px-3 lg:px-4 py-4 text-left font-bold text-gray-700">Nilai Perilaku</th>
+                                <th class="px-3 lg:px-4 py-4 text-left font-bold text-gray-700">Total Skor</th>
+                                <th class="px-3 lg:px-4 py-4 text-left font-bold text-gray-700">Status Kinerja</th>
+                                <th class="px-3 lg:px-4 py-4 text-left font-bold text-gray-700">Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody id="rekapTableBody">
+                            <!-- Data akan ditampilkan di sini -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Input Data Tab -->
+        <div id="inputSection" class="hidden glass-effect rounded-2xl shadow-xl p-4 lg:p-8 mb-8 border border-white/20">
+            <div class="flex flex-col lg:flex-row lg:justify-between lg:items-center mb-6 space-y-4 lg:space-y-0">
+                <h2 class="text-2xl lg:text-3xl font-bold text-gray-800">Input Data PPSU</h2>
+                <div class="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-3">
+                    <button onclick="resetForm()" class="bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white px-4 py-3 rounded-xl font-semibold transition-all shadow-lg hover:shadow-xl flex items-center justify-center space-x-2">
+                        <span>➕</span>
+                        <span>Tambah Baru</span>
+                    </button>
+                    <button onclick="exportInputExcel()" class="bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white px-4 py-3 rounded-xl font-semibold transition-all shadow-lg hover:shadow-xl flex items-center justify-center space-x-2">
+                        <span>📊</span>
+                        <span class="hidden sm:inline">Export Excel</span>
+                        <span class="sm:hidden">Excel</span>
+                    </button>
+                    <button onclick="exportInputCSV()" class="bg-gradient-to-r from-purple-500 to-purple-600 hover:from-purple-600 hover:to-purple-700 text-white px-4 py-3 rounded-xl font-semibold transition-all shadow-lg hover:shadow-xl flex items-center justify-center space-x-2">
+                        <span>📋</span>
+                        <span class="hidden sm:inline">Export CSV</span>
+                        <span class="sm:hidden">CSV</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Form Input -->
+            <form id="employeeForm" class="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4 lg:gap-6 mb-8">
+                <input type="hidden" id="editIndex" value="">
+                
+                <div>
+                    <label class="block text-sm font-bold text-gray-700 mb-2">👤 Nama PPSU</label>
+                    <input type="text" id="nama" required class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all">
+                </div>
+
+                <div>
+                    <label class="block text-sm font-bold text-gray-700 mb-2">📅 Jumlah Kehadiran/Bulan</label>
+                    <input type="number" id="kehadiran" required class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all">
+                </div>
+
+                <div>
+                    <label class="block text-sm font-bold text-gray-700 mb-2">⏰ Keterlambatan (Menit)</label>
+                    <input type="number" id="keterlambatan" class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all">
+                </div>
+
+                <div>
+                    <label class="block text-sm font-bold text-gray-700 mb-2">🏃 Cepat Pulang (Menit)</label>
+                    <input type="number" id="cepatPulang" class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all">
+                </div>
+
+                <div>
+                    <label class="block text-sm font-bold text-gray-700 mb-2">❌ Tidak Absen Masuk</label>
+                    <input type="number" id="tidakAbsenMasuk" class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all">
+                </div>
+
+                <div>
+                    <label class="block text-sm font-bold text-gray-700 mb-2">❌ Tidak Absen Pulang</label>
+                    <input type="number" id="tidakAbsenPulang" class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all">
+                </div>
+
+                <div>
+                    <label class="block text-sm font-bold text-gray-700 mb-2">⏱️ Potongan Menit Tidak Absen</label>
+                    <input type="number" id="potonganMenit" class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all">
+                </div>
+
+                <div>
+                    <label class="block text-sm font-bold text-gray-700 mb-2">🎯 Total Botol Target/Bulan</label>
+                    <input type="number" id="targetBotol" class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all">
+                </div>
+
+                <div>
+                    <label class="block text-sm font-bold text-gray-700 mb-2">⭐ Nilai Perilaku (0-20)</label>
+                    <input type="number" id="nilaiPerilaku" min="0" max="20" step="0.1" class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all">
+                </div>
+
+                <div class="lg:col-span-2 xl:col-span-3">
+                    <button type="submit" id="submitBtn" class="w-full lg:w-auto bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white px-8 py-4 rounded-xl font-bold transition-all shadow-lg hover:shadow-xl">
+                        💾 Simpan Data
+                    </button>
+                </div>
+            </form>
+
+            <!-- Data Table -->
+            <div class="mobile-scroll">
+                <div class="table-scroll border-2 border-gray-200 rounded-xl overflow-hidden shadow-lg">
+                    <table class="w-full text-sm mobile-table">
+                        <thead class="bg-gradient-to-r from-gray-50 to-gray-100 sticky-header">
+                            <tr>
+                                <th class="px-3 py-4 text-left font-bold text-gray-700">No</th>
+                                <th class="px-3 py-4 text-left font-bold text-gray-700">Nama</th>
+                                <th class="px-3 py-4 text-left font-bold text-gray-700">Kehadiran</th>
+                                <th class="px-3 py-4 text-left font-bold text-gray-700">Terlambat</th>
+                                <th class="px-3 py-4 text-left font-bold text-gray-700">Cepat Pulang</th>
+                                <th class="px-3 py-4 text-left font-bold text-gray-700">Tidak Absen Masuk</th>
+                                <th class="px-3 py-4 text-left font-bold text-gray-700">Tidak Absen Pulang</th>
+                                <th class="px-3 py-4 text-left font-bold text-gray-700">Potongan Menit</th>
+                                <th class="px-3 py-4 text-left font-bold text-gray-700">Target Botol</th>
+                                <th class="px-3 py-4 text-left font-bold text-gray-700">Nilai Kehadiran</th>
+                                <th class="px-3 py-4 text-left font-bold text-gray-700">Nilai Kinerja</th>
+                                <th class="px-3 py-4 text-left font-bold text-gray-700">Nilai Perilaku</th>
+                                <th class="px-3 py-4 text-left font-bold text-gray-700">Total Skor</th>
+                                <th class="px-3 py-4 text-left font-bold text-gray-700">Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody id="employeeTableBody">
+                            <!-- Data akan ditampilkan di sini -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Performance Book Tab -->
+        <div id="performanceSection" class="hidden glass-effect rounded-2xl shadow-xl p-4 lg:p-8 mb-8 border border-white/20">
+            <div class="flex flex-col lg:flex-row lg:justify-between lg:items-center mb-6 space-y-4 lg:space-y-0">
+                <h2 class="text-2xl lg:text-3xl font-bold text-gray-800">Laporan Buku Kinerja</h2>
+                <div class="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-3">
+                    <button onclick="resetPerformanceForm()" class="bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white px-4 py-3 rounded-xl font-semibold transition-all shadow-lg hover:shadow-xl flex items-center justify-center space-x-2">
+                        <span>➕</span>
+                        <span>Tambah Data Kinerja</span>
+                    </button>
+                    <button onclick="exportPerformanceExcel()" class="bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white px-4 py-3 rounded-xl font-semibold transition-all shadow-lg hover:shadow-xl flex items-center justify-center space-x-2">
+                        <span>📊</span>
+                        <span class="hidden sm:inline">Export Excel</span>
+                        <span class="sm:hidden">Excel</span>
+                    </button>
+                    <button onclick="exportPerformanceCSV()" class="bg-gradient-to-r from-purple-500 to-purple-600 hover:from-purple-600 hover:to-purple-700 text-white px-4 py-3 rounded-xl font-semibold transition-all shadow-lg hover:shadow-xl flex items-center justify-center space-x-2">
+                        <span>📋</span>
+                        <span class="hidden sm:inline">Export CSV</span>
+                        <span class="sm:hidden">CSV</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Performance Form -->
+            <form id="performanceForm" class="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4 lg:gap-6 mb-8">
+                <input type="hidden" id="performanceEditIndex" value="">
+                
+                <div>
+                    <label class="block text-sm font-bold text-gray-700 mb-2">👤 Pilih PPSU</label>
+                    <select id="performanceEmployee" required class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all">
+                        <option value="">-- Pilih PPSU --</option>
+                    </select>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-bold text-gray-700 mb-2">📅 Bulan/Tahun</label>
+                    <input type="month" id="performanceMonth" required class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all">
+                </div>
+
+                <div>
+                    <label class="block text-sm font-bold text-gray-700 mb-2">🎯 Jumlah Botol Tercapai</label>
+                    <input type="number" id="botolTercapai" required class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all">
+                </div>
+
+                <div>
+                    <label class="block text-sm font-bold text-gray-700 mb-2">⭐ Nilai Kualitas Kerja (0-31)</label>
+                    <input type="number" id="kualitasKerja" min="0" max="31" step="0.1" required class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all">
+                </div>
+
+                <div class="lg:col-span-2">
+                    <label class="block text-sm font-bold text-gray-700 mb-2">📝 Catatan Kinerja</label>
+                    <textarea id="catatanKinerja" rows="3" class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"></textarea>
+                </div>
+
+                <div class="lg:col-span-2 xl:col-span-3">
+                    <button type="submit" id="performanceSubmitBtn" class="w-full lg:w-auto bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white px-8 py-4 rounded-xl font-bold transition-all shadow-lg hover:shadow-xl">
+                        💾 Simpan Data Kinerja
+                    </button>
+                </div>
+            </form>
+
+            <!-- Performance Table -->
+            <div class="mobile-scroll">
+                <div class="table-scroll border-2 border-gray-200 rounded-xl overflow-hidden shadow-lg">
+                    <table class="w-full text-sm mobile-table">
+                        <thead class="bg-gradient-to-r from-gray-50 to-gray-100 sticky-header">
+                            <tr>
+                                <th class="px-3 py-4 text-left font-bold text-gray-700">No</th>
+                                <th class="px-3 py-4 text-left font-bold text-gray-700">Nama PPSU</th>
+                                <th class="px-3 py-4 text-left font-bold text-gray-700">Bulan/Tahun</th>
+                                <th class="px-3 py-4 text-left font-bold text-gray-700">Target Botol</th>
+                                <th class="px-3 py-4 text-left font-bold text-gray-700">Botol Tercapai</th>
+                                <th class="px-3 py-4 text-left font-bold text-gray-700">Persentase (%)</th>
+                                <th class="px-3 py-4 text-left font-bold text-gray-700">Kualitas Kerja</th>
+                                <th class="px-3 py-4 text-left font-bold text-gray-700">Nilai Kinerja</th>
+                                <th class="px-3 py-4 text-left font-bold text-gray-700">Catatan</th>
+                                <th class="px-3 py-4 text-left font-bold text-gray-700">Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody id="performanceTableBody">
+                            <!-- Data kinerja akan ditampilkan di sini -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Dashboard Tab -->
+        <div id="dashboardSection" class="hidden">
+            <div class="glass-effect rounded-2xl shadow-xl p-4 lg:p-8 mb-8 border border-white/20">
+                <div class="flex flex-col lg:flex-row lg:justify-between lg:items-center mb-6 space-y-4 lg:space-y-0">
+                    <h2 class="text-2xl lg:text-3xl font-bold text-gray-800">Dashboard Rekapan</h2>
+                    <div class="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-3">
+                        <button onclick="exportDashboardExcel()" class="bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white px-4 py-3 rounded-xl font-semibold transition-all shadow-lg hover:shadow-xl flex items-center justify-center space-x-2">
+                            <span>📊</span>
+                            <span class="hidden sm:inline">Export Excel</span>
+                            <span class="sm:hidden">Excel</span>
+                        </button>
+                        <button onclick="exportDashboardCSV()" class="bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white px-4 py-3 rounded-xl font-semibold transition-all shadow-lg hover:shadow-xl flex items-center justify-center space-x-2">
+                            <span>📋</span>
+                            <span class="hidden sm:inline">Export CSV</span>
+                            <span class="sm:hidden">CSV</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Summary Cards -->
+                <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-8 mb-8">
+                    <div class="bg-gradient-to-br from-blue-500 to-blue-600 text-white p-6 lg:p-8 rounded-2xl shadow-lg card-hover">
+                        <div class="text-3xl lg:text-4xl mb-3">👥</div>
+                        <h3 class="text-lg lg:text-xl font-bold mb-2">Total PPSU</h3>
+                        <p class="text-2xl lg:text-4xl font-bold" id="totalKaryawan">0</p>
+                    </div>
+                    <div class="bg-gradient-to-br from-green-500 to-green-600 text-white p-6 lg:p-8 rounded-2xl shadow-lg card-hover">
+                        <div class="text-3xl lg:text-4xl mb-3">📈</div>
+                        <h3 class="text-lg lg:text-xl font-bold mb-2">Rata-rata Skor</h3>
+                        <p class="text-2xl lg:text-4xl font-bold" id="rataRataSkor">0%</p>
+                    </div>
+                    <div class="bg-gradient-to-br from-yellow-500 to-yellow-600 text-white p-6 lg:p-8 rounded-2xl shadow-lg card-hover">
+                        <div class="text-3xl lg:text-4xl mb-3">🏆</div>
+                        <h3 class="text-lg lg:text-xl font-bold mb-2">Skor Tertinggi</h3>
+                        <p class="text-2xl lg:text-4xl font-bold" id="skorTertinggi">0%</p>
+                    </div>
+                    <div class="bg-gradient-to-br from-red-500 to-red-600 text-white p-6 lg:p-8 rounded-2xl shadow-lg card-hover">
+                        <div class="text-3xl lg:text-4xl mb-3">📉</div>
+                        <h3 class="text-lg lg:text-xl font-bold mb-2">Skor Terendah</h3>
+                        <p class="text-2xl lg:text-4xl font-bold" id="skorTerendah">0%</p>
+                    </div>
+                </div>
+
+                <!-- Dashboard Table -->
+                <div class="mobile-scroll">
+                    <div class="table-scroll border-2 border-gray-200 rounded-xl overflow-hidden shadow-lg">
+                        <table class="w-full text-sm mobile-table">
+                            <thead class="bg-gradient-to-r from-gray-50 to-gray-100 sticky-header">
+                                <tr>
+                                    <th class="px-3 lg:px-4 py-4 text-left font-bold text-gray-700">Ranking</th>
+                                    <th class="px-3 lg:px-4 py-4 text-left font-bold text-gray-700">Nama</th>
+                                    <th class="px-3 lg:px-4 py-4 text-left font-bold text-gray-700">Nilai Kehadiran</th>
+                                    <th class="px-3 lg:px-4 py-4 text-left font-bold text-gray-700">Nilai Kinerja</th>
+                                    <th class="px-3 lg:px-4 py-4 text-left font-bold text-gray-700">Nilai Perilaku</th>
+                                    <th class="px-3 lg:px-4 py-4 text-left font-bold text-gray-700">Total Skor</th>
+                                    <th class="px-3 lg:px-4 py-4 text-left font-bold text-gray-700">Status</th>
+                                </tr>
+                            </thead>
+                            <tbody id="dashboardTableBody">
+                                <!-- Data dashboard akan ditampilkan di sini -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add New PPSU Modal -->
+    <div id="addNewPPSUModal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6">
+            <div class="flex justify-between items-center mb-6">
+                <h3 class="text-xl font-bold text-gray-800">Tambah PPSU Baru</h3>
+                <button onclick="closeAddNewPPSUModal()" class="text-gray-400 hover:text-gray-600 text-2xl">×</button>
+            </div>
+            <form id="addNewPPSUForm">
+                <div class="mb-4">
+                    <label class="block text-sm font-bold text-gray-700 mb-2">👤 Nama PPSU Baru</label>
+                    <input type="text" id="newPPSUName" required class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all" placeholder="Masukkan nama PPSU baru">
+                </div>
+                <div class="flex space-x-3">
+                    <button type="button" onclick="closeAddNewPPSUModal()" class="flex-1 bg-gray-300 hover:bg-gray-400 text-gray-700 px-4 py-3 rounded-xl font-semibold transition-all">
+                        Batal
+                    </button>
+                    <button type="submit" class="flex-1 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white px-4 py-3 rounded-xl font-semibold transition-all">
+                        Tambah
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Login Modal -->
+    <div id="loginModal" class="hidden fixed inset-0 bg-black bg-opacity-75 z-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl shadow-2xl max-w-md w-full p-8">
+            <div class="text-center mb-8">
+                <div class="w-20 h-20 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <svg class="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path>
+                    </svg>
+                </div>
+                <h2 class="text-2xl font-bold text-gray-800 mb-2">Login Admin</h2>
+                <p class="text-gray-600">Masukkan kredensial admin untuk mengakses sistem</p>
+            </div>
+            
+            <form id="loginForm">
+                <div class="mb-6">
+                    <label class="block text-sm font-bold text-gray-700 mb-2">👤 Username</label>
+                    <input type="text" id="loginUsername" required class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all" placeholder="Masukkan username">
+                </div>
+                
+                <div class="mb-6">
+                    <label class="block text-sm font-bold text-gray-700 mb-2">🔒 Password</label>
+                    <input type="password" id="loginPassword" required class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all" placeholder="Masukkan password">
+                </div>
+                
+                <div id="loginError" class="hidden mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded-xl text-sm">
+                    Username atau password salah!
+                </div>
+                
+                <button type="submit" class="w-full bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white px-6 py-4 rounded-xl font-bold transition-all shadow-lg hover:shadow-xl">
+                    🔓 Login
+                </button>
+            </form>
+            
+            <div class="mt-6 text-center">
+                <p class="text-xs text-gray-500">Sistem Penilaian PPSU PISBAR</p>
+                <p class="text-xs text-gray-400">Hanya untuk admin yang berwenang</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Logout Button (Hidden initially) -->
+    <div id="logoutButton" class="hidden fixed top-4 right-4 z-40">
+        <button onclick="logout()" class="bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white px-4 py-2 rounded-xl font-semibold transition-all shadow-lg hover:shadow-xl flex items-center space-x-2">
+            <span>🚪</span>
+            <span>Logout</span>
+        </button>
+    </div>
+
+    <script>
+        let employees = JSON.parse(localStorage.getItem('employees')) || [];
+        let performanceData = JSON.parse(localStorage.getItem('performanceData')) || [];
+        let editingIndex = -1;
+        let performanceEditingIndex = -1;
+        let isLoggedIn = sessionStorage.getItem('adminLoggedIn') === 'true';
+
+        // PPSU Names List
+        let ppsuNames = JSON.parse(localStorage.getItem('ppsuNames')) || [
+            'Achmad Rosidi', 'Ade Kurniawan', 'Al Azahar', 'Alwi', 'Arif Abdul Rahman',
+            'Asep', 'Chandra Darmawan', 'Daday Sukandar', 'Dea Sabilah Handriyani', 'Deni Arcis',
+            'Dewo Panca Pamungkas', 'Dimas Herwinto Pradana', 'Eris Sumiadi', 'Fida Marzuki Putra', 'Herdinsah',
+            'Hermansyah', 'Hikmatun Nisa', 'Ihsan Muttaqien', 'Ilham Prayitno Yudo', 'Indra Jaya',
+            'Irfan Mahadi', 'M. Yusuf', 'Maryanto', 'Mohamad Irwan Yulianto', 'Muhammad Khomeini',
+            'Nur Iman', 'Nuryana', 'Puji Lestari', 'Pujiyanto', 'Rafly Nugraha',
+            'Rahman', 'Rahmat Agustio', 'Reynaldi Saputra', 'Rizky Prasetia', 'Rohmah',
+            'Sabar Minggudi', 'Siti Marsah', 'Suhanda', 'Supardi', 'Suwandi',
+            'Syaiful Huda', 'Tri Julianto', 'Wiyono Fauzy'
+        ];
+
+        let filteredPPSU = [...ppsuNames];
+
+        // Login System
+        function checkLoginStatus() {
+            if (isLoggedIn) {
+                document.getElementById('logoutButton').classList.remove('hidden');
+                document.getElementById('adminNavigation').classList.remove('hidden');
+                document.getElementById('adminMobileMenu').classList.remove('hidden');
+                document.getElementById('mobileMenu').classList.add('hidden');
+            } else {
+                document.getElementById('logoutButton').classList.add('hidden');
+                document.getElementById('adminNavigation').classList.add('hidden');
+                document.getElementById('adminMobileMenu').classList.add('hidden');
+                document.getElementById('mobileMenu').classList.remove('hidden');
+            }
+        }
+
+        function showAdminLogin() {
+            document.getElementById('loginModal').classList.remove('hidden');
+            document.body.style.overflow = 'hidden';
+        }
+
+        // Login form submission
+        document.getElementById('loginForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const username = document.getElementById('loginUsername').value;
+            const password = document.getElementById('loginPassword').value;
+            
+            if (username === 'elfida' && password === 'pis212oK') {
+                isLoggedIn = true;
+                sessionStorage.setItem('adminLoggedIn', 'true');
+                document.getElementById('loginError').classList.add('hidden');
+                document.getElementById('loginModal').classList.add('hidden');
+                document.body.style.overflow = 'auto';
+                checkLoginStatus();
+                showTab('rekap'); // Show default admin tab after login
+            } else {
+                document.getElementById('loginError').classList.remove('hidden');
+                document.getElementById('loginPassword').value = '';
+            }
+        });
+
+        // Logout function
+        function logout() {
+            if (confirm('Apakah Anda yakin ingin logout?')) {
+                isLoggedIn = false;
+                sessionStorage.removeItem('adminLoggedIn');
+                document.getElementById('loginUsername').value = '';
+                document.getElementById('loginPassword').value = '';
+                document.getElementById('loginError').classList.add('hidden');
+                checkLoginStatus();
+                showTab('dashboard'); // Return to public dashboard
+            }
+        }
+
+        // Mobile menu toggle
+        function toggleMobileMenu() {
+            if (isLoggedIn) {
+                const adminMenu = document.getElementById('adminMobileMenu');
+                adminMenu.classList.toggle('hidden');
+            } else {
+                const menu = document.getElementById('mobileMenu');
+                menu.classList.toggle('hidden');
+            }
+        }
+
+        // Show/Hide tabs
+        function showTab(tab) {
+            // Admin-only tabs require login
+            if ((tab === 'rekap' || tab === 'input' || tab === 'performance') && !isLoggedIn) {
+                showAdminLogin();
+                return;
+            }
+            
+            const rekapSection = document.getElementById('rekapSection');
+            const inputSection = document.getElementById('inputSection');
+            const performanceSection = document.getElementById('performanceSection');
+            const dashboardSection = document.getElementById('dashboardSection');
+            
+            // Hide all sections
+            rekapSection.classList.add('hidden');
+            inputSection.classList.add('hidden');
+            performanceSection.classList.add('hidden');
+            dashboardSection.classList.add('hidden');
+
+            // Reset all tab styles
+            const baseTabClass = 'px-8 py-6 font-semibold text-gray-500 hover:text-blue-600 whitespace-nowrap flex items-center space-x-2 transition-all';
+            const activeTabClass = 'px-8 py-6 font-semibold text-blue-600 border-b-3 border-blue-600 whitespace-nowrap flex items-center space-x-2 transition-all';
+            
+            // Reset public tabs
+            const dashboardTab = document.getElementById('dashboardTab');
+            const adminTab = document.getElementById('adminTab');
+            if (dashboardTab) dashboardTab.className = baseTabClass;
+            if (adminTab) adminTab.className = baseTabClass;
+            
+            // Reset admin tabs if logged in
+            if (isLoggedIn) {
+                const rekapTab = document.getElementById('rekapTab');
+                const inputTab = document.getElementById('inputTab');
+                const performanceTab = document.getElementById('performanceTab');
+                const dashboardTabAdmin = document.getElementById('dashboardTabAdmin');
+                
+                if (rekapTab) rekapTab.className = baseTabClass;
+                if (inputTab) inputTab.className = baseTabClass;
+                if (performanceTab) performanceTab.className = baseTabClass;
+                if (dashboardTabAdmin) dashboardTabAdmin.className = baseTabClass;
+            }
+
+            if (tab === 'dashboard') {
+                dashboardSection.classList.remove('hidden');
+                if (isLoggedIn) {
+                    const dashboardTabAdmin = document.getElementById('dashboardTabAdmin');
+                    if (dashboardTabAdmin) dashboardTabAdmin.className = activeTabClass;
+                } else {
+                    if (dashboardTab) dashboardTab.className = activeTabClass;
+                }
+                updateDashboard();
+            } else if (tab === 'rekap') {
+                rekapSection.classList.remove('hidden');
+                const rekapTab = document.getElementById('rekapTab');
+                if (rekapTab) rekapTab.className = activeTabClass;
+                renderRekapPPSU();
+                updateRekapStats();
+            } else if (tab === 'input') {
+                inputSection.classList.remove('hidden');
+                const inputTab = document.getElementById('inputTab');
+                if (inputTab) inputTab.className = activeTabClass;
+                renderTable();
+            } else if (tab === 'performance') {
+                performanceSection.classList.remove('hidden');
+                const performanceTab = document.getElementById('performanceTab');
+                if (performanceTab) performanceTab.className = activeTabClass;
+                updateEmployeeDropdown();
+                renderPerformanceTable();
+            }
+        }
+
+        // Add New PPSU Modal Functions
+        function showAddNewPPSUModal() {
+            if (!isLoggedIn) {
+                checkLoginStatus();
+                return;
+            }
+            document.getElementById('addNewPPSUModal').classList.remove('hidden');
+            document.getElementById('newPPSUName').focus();
+        }
+
+        function closeAddNewPPSUModal() {
+            document.getElementById('addNewPPSUModal').classList.add('hidden');
+            document.getElementById('addNewPPSUForm').reset();
+        }
+
+        // Add New PPSU Form Submission
+        document.getElementById('addNewPPSUForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const newName = document.getElementById('newPPSUName').value.trim();
+            
+            if (newName && !ppsuNames.includes(newName)) {
+                ppsuNames.push(newName);
+                ppsuNames.sort(); // Keep alphabetical order
+                localStorage.setItem('ppsuNames', JSON.stringify(ppsuNames));
+                filteredPPSU = [...ppsuNames];
+                
+                closeAddNewPPSUModal();
+                renderRekapPPSU();
+                updateRekapStats();
+                
+                // Show success message
+                alert(`PPSU "${newName}" berhasil ditambahkan ke daftar!`);
+            } else if (ppsuNames.includes(newName)) {
+                alert('Nama PPSU sudah ada dalam daftar!');
+            }
+        });
+
+        // Calculate scores
+        function calculateScores(employee) {
+            const kehadiran = parseFloat(employee.kehadiran) || 0;
+            const keterlambatan = parseFloat(employee.keterlambatan) || 0;
+            const cepatPulang = parseFloat(employee.cepatPulang) || 0;
+            const potonganMenit = parseFloat(employee.potonganMenit) || 0;
+            const targetBotol = parseFloat(employee.targetBotol) || 0;
+            const nilaiPerilaku = parseFloat(employee.nilaiPerilaku) || 0;
+
+            // Nilai Kehadiran = ((C7/27)*50)-((D7 + E7+H7) * (50 / (26 * 7 * 60)))
+            const nilaiKehadiran = ((kehadiran / 27) * 50) - ((keterlambatan + cepatPulang + potonganMenit) * (50 / (26 * 7 * 60)));
+            
+            // Get performance data for this employee
+            const employeePerformance = performanceData.find(p => p.employeeName === employee.nama);
+            let botolTercapai = 0;
+            let kualitasKerja = 0;
+            
+            if (employeePerformance) {
+                botolTercapai = parseFloat(employeePerformance.botolTercapai) || 0;
+                kualitasKerja = parseFloat(employeePerformance.kualitasKerja) || 0;
+            }
+            
+            // Nilai Kinerja = MIN(15; (I8/(5*27))*15)+(AV8/31)*15
+            // I8 = botolTercapai, AV8 = kualitasKerja
+            const nilaiKinerja = Math.min(15, (botolTercapai / (5 * 27)) * 15) + (kualitasKerja / 31) * 15;
+            
+            // Total Skor
+            const totalSkor = Math.max(0, nilaiKehadiran) + Math.max(0, nilaiKinerja) + nilaiPerilaku;
+
+            return {
+                nilaiKehadiran: Math.max(0, nilaiKehadiran).toFixed(2),
+                nilaiKinerja: Math.max(0, nilaiKinerja).toFixed(2),
+                totalSkor: totalSkor.toFixed(2)
+            };
+        }
+
+        // Form submission
+        document.getElementById('employeeForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const employee = {
+                nama: document.getElementById('nama').value,
+                kehadiran: document.getElementById('kehadiran').value,
+                keterlambatan: document.getElementById('keterlambatan').value || 0,
+                cepatPulang: document.getElementById('cepatPulang').value || 0,
+                tidakAbsenMasuk: document.getElementById('tidakAbsenMasuk').value || 0,
+                tidakAbsenPulang: document.getElementById('tidakAbsenPulang').value || 0,
+                potonganMenit: document.getElementById('potonganMenit').value || 0,
+                targetBotol: document.getElementById('targetBotol').value || 0,
+                nilaiPerilaku: document.getElementById('nilaiPerilaku').value || 0
+            };
+
+            if (editingIndex >= 0) {
+                employees[editingIndex] = employee;
+                editingIndex = -1;
+                document.getElementById('submitBtn').textContent = '💾 Simpan Data';
+            } else {
+                employees.push(employee);
+            }
+
+            localStorage.setItem('employees', JSON.stringify(employees));
+            renderTable();
+            resetForm();
+            updateRekapStats();
+        });
+
+        // Render table
+        function renderTable() {
+            const tbody = document.getElementById('employeeTableBody');
+            tbody.innerHTML = '';
+
+            if (employees.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="14" class="text-center py-8 text-gray-500">Belum ada data PPSU</td></tr>';
+                return;
+            }
+
+            employees.forEach((employee, index) => {
+                const scores = calculateScores(employee);
+                const row = document.createElement('tr');
+                row.className = 'border-b hover:bg-gray-50 transition-colors';
+                
+                row.innerHTML = `
+                    <td class="px-3 py-4">${index + 1}</td>
+                    <td class="px-3 py-4 font-semibold">${employee.nama}</td>
+                    <td class="px-3 py-4">${employee.kehadiran}</td>
+                    <td class="px-3 py-4">${employee.keterlambatan}</td>
+                    <td class="px-3 py-4">${employee.cepatPulang}</td>
+                    <td class="px-3 py-4">${employee.tidakAbsenMasuk}</td>
+                    <td class="px-3 py-4">${employee.tidakAbsenPulang}</td>
+                    <td class="px-3 py-4">${employee.potonganMenit}</td>
+                    <td class="px-3 py-4">${employee.targetBotol}</td>
+                    <td class="px-3 py-4 font-bold text-blue-600">${scores.nilaiKehadiran}%</td>
+                    <td class="px-3 py-4 font-bold text-green-600">${scores.nilaiKinerja}%</td>
+                    <td class="px-3 py-4 font-bold text-purple-600">${employee.nilaiPerilaku}%</td>
+                    <td class="px-3 py-4 font-bold text-orange-600 text-lg">${scores.totalSkor}%</td>
+                    <td class="px-3 py-4">
+                        <div class="flex space-x-1">
+                            <button onclick="editEmployee(${index})" class="bg-yellow-500 hover:bg-yellow-600 text-white px-2 py-1 rounded-lg text-xs font-medium transition-colors">✏️</button>
+                            <button onclick="deleteEmployee(${index})" class="bg-red-500 hover:bg-red-600 text-white px-2 py-1 rounded-lg text-xs font-medium transition-colors">🗑️</button>
+                        </div>
+                    </td>
+                `;
+                tbody.appendChild(row);
+            });
+        }
+
+        // Edit employee
+        function editEmployee(index) {
+            if (!isLoggedIn) {
+                checkLoginStatus();
+                return;
+            }
+            const employee = employees[index];
+            document.getElementById('nama').value = employee.nama;
+            document.getElementById('kehadiran').value = employee.kehadiran;
+            document.getElementById('keterlambatan').value = employee.keterlambatan;
+            document.getElementById('cepatPulang').value = employee.cepatPulang;
+            document.getElementById('tidakAbsenMasuk').value = employee.tidakAbsenMasuk;
+            document.getElementById('tidakAbsenPulang').value = employee.tidakAbsenPulang;
+            document.getElementById('potonganMenit').value = employee.potonganMenit;
+            document.getElementById('targetBotol').value = employee.targetBotol;
+            document.getElementById('nilaiPerilaku').value = employee.nilaiPerilaku;
+            
+            editingIndex = index;
+            document.getElementById('submitBtn').textContent = '✅ Update Data';
+            showTab('input');
+        }
+
+        // Delete employee
+        function deleteEmployee(index) {
+            if (!isLoggedIn) {
+                checkLoginStatus();
+                return;
+            }
+            if (confirm('Apakah Anda yakin ingin menghapus data PPSU ini?')) {
+                employees.splice(index, 1);
+                localStorage.setItem('employees', JSON.stringify(employees));
+                renderTable();
+                updateDashboard();
+                updateRekapStats();
+            }
+        }
+
+        // Reset form
+        function resetForm() {
+            if (!isLoggedIn) {
+                checkLoginStatus();
+                return;
+            }
+            document.getElementById('employeeForm').reset();
+            editingIndex = -1;
+            document.getElementById('submitBtn').textContent = '💾 Simpan Data';
+        }
+
+        // Update dashboard
+        function updateDashboard() {
+            const totalKaryawan = employees.length;
+            document.getElementById('totalKaryawan').textContent = totalKaryawan;
+
+            if (totalKaryawan === 0) {
+                document.getElementById('rataRataSkor').textContent = '0%';
+                document.getElementById('skorTertinggi').textContent = '0%';
+                document.getElementById('skorTerendah').textContent = '0%';
+                document.getElementById('dashboardTableBody').innerHTML = '<tr><td colspan="7" class="text-center py-8 text-gray-500">Belum ada data PPSU</td></tr>';
+                return;
+            }
+
+            const employeesWithScores = employees.map((employee, index) => {
+                const scores = calculateScores(employee);
+                return {
+                    ...employee,
+                    ...scores,
+                    index
+                };
+            }).sort((a, b) => parseFloat(b.totalSkor) - parseFloat(a.totalSkor));
+
+            const totalScores = employeesWithScores.map(emp => parseFloat(emp.totalSkor));
+            const avgScore = (totalScores.reduce((a, b) => a + b, 0) / totalScores.length).toFixed(2);
+            const maxScore = Math.max(...totalScores).toFixed(2);
+            const minScore = Math.min(...totalScores).toFixed(2);
+
+            document.getElementById('rataRataSkor').textContent = avgScore + '%';
+            document.getElementById('skorTertinggi').textContent = maxScore + '%';
+            document.getElementById('skorTerendah').textContent = minScore + '%';
+
+            // Render dashboard table
+            const dashboardTbody = document.getElementById('dashboardTableBody');
+            dashboardTbody.innerHTML = '';
+
+            employeesWithScores.forEach((employee, rank) => {
+                const row = document.createElement('tr');
+                row.className = 'border-b hover:bg-gray-50 transition-colors';
+                
+                let statusClass = 'bg-green-100 text-green-800';
+                let statusText = 'Baik';
+                const score = parseFloat(employee.totalSkor);
+                
+                if (score >= 80) {
+                    statusClass = 'bg-green-100 text-green-800';
+                    statusText = 'Sangat Baik';
+                } else if (score >= 70) {
+                    statusClass = 'bg-blue-100 text-blue-800';
+                    statusText = 'Baik';
+                } else if (score >= 60) {
+                    statusClass = 'bg-yellow-100 text-yellow-800';
+                    statusText = 'Cukup';
+                } else {
+                    statusClass = 'bg-red-100 text-red-800';
+                    statusText = 'Perlu Perbaikan';
+                }
+
+                let rankIcon = '🥉';
+                if (rank === 0) rankIcon = '🥇';
+                else if (rank === 1) rankIcon = '🥈';
+
+                row.innerHTML = `
+                    <td class="px-3 lg:px-4 py-4 font-bold text-xl">${rankIcon} ${rank + 1}</td>
+                    <td class="px-3 lg:px-4 py-4 font-semibold">${employee.nama}</td>
+                    <td class="px-3 lg:px-4 py-4 text-blue-600 font-bold">${employee.nilaiKehadiran}%</td>
+                    <td class="px-3 lg:px-4 py-4 text-green-600 font-bold">${employee.nilaiKinerja}%</td>
+                    <td class="px-3 lg:px-4 py-4 text-purple-600 font-bold">${employee.nilaiPerilaku}%</td>
+                    <td class="px-3 lg:px-4 py-4 text-orange-600 font-bold text-xl">${employee.totalSkor}%</td>
+                    <td class="px-3 lg:px-4 py-4">
+                        <span class="px-3 py-1 rounded-full text-xs font-bold ${statusClass}">${statusText}</span>
+                    </td>
+                `;
+                dashboardTbody.appendChild(row);
+            });
+        }
+
+        // Export Functions for Dashboard
+        function exportDashboardExcel() {
+            if (employees.length === 0) {
+                alert('Tidak ada data untuk diekspor!');
+                return;
+            }
+
+            const employeesWithScores = employees.map((employee, index) => {
+                const scores = calculateScores(employee);
+                return {
+                    ...employee,
+                    ...scores,
+                    index
+                };
+            }).sort((a, b) => parseFloat(b.totalSkor) - parseFloat(a.totalSkor));
+
+            const exportData = employeesWithScores.map((employee, rank) => {
+                const score = parseFloat(employee.totalSkor);
+                let statusText = 'Perlu Perbaikan';
+                if (score >= 80) statusText = 'Sangat Baik';
+                else if (score >= 70) statusText = 'Baik';
+                else if (score >= 60) statusText = 'Cukup';
+
+                return {
+                    'Ranking': rank + 1,
+                    'Nama PPSU': employee.nama,
+                    'Nilai Kehadiran (%)': employee.nilaiKehadiran,
+                    'Nilai Kinerja (%)': employee.nilaiKinerja,
+                    'Nilai Perilaku (%)': employee.nilaiPerilaku,
+                    'Total Skor (%)': employee.totalSkor,
+                    'Status Kinerja': statusText
+                };
+            });
+
+            const ws = XLSX.utils.json_to_sheet(exportData);
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, 'Dashboard Ranking PPSU');
+            
+            const fileName = `Dashboard_Ranking_PPSU_${new Date().toISOString().split('T')[0]}.xlsx`;
+            XLSX.writeFile(wb, fileName);
+        }
+
+        function exportDashboardCSV() {
+            if (employees.length === 0) {
+                alert('Tidak ada data untuk diekspor!');
+                return;
+            }
+
+            const employeesWithScores = employees.map((employee, index) => {
+                const scores = calculateScores(employee);
+                return {
+                    ...employee,
+                    ...scores,
+                    index
+                };
+            }).sort((a, b) => parseFloat(b.totalSkor) - parseFloat(a.totalSkor));
+
+            const headers = ['Ranking', 'Nama PPSU', 'Nilai Kehadiran (%)', 'Nilai Kinerja (%)', 'Nilai Perilaku (%)', 'Total Skor (%)', 'Status Kinerja'];
+            
+            const csvContent = [
+                headers.join(','),
+                ...employeesWithScores.map((employee, rank) => {
+                    const score = parseFloat(employee.totalSkor);
+                    let statusText = 'Perlu Perbaikan';
+                    if (score >= 80) statusText = 'Sangat Baik';
+                    else if (score >= 70) statusText = 'Baik';
+                    else if (score >= 60) statusText = 'Cukup';
+
+                    return [
+                        rank + 1,
+                        `"${employee.nama}"`,
+                        employee.nilaiKehadiran,
+                        employee.nilaiKinerja,
+                        employee.nilaiPerilaku,
+                        employee.totalSkor,
+                        `"${statusText}"`
+                    ].join(',');
+                })
+            ].join('\n');
+
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            const url = URL.createObjectURL(blob);
+            link.setAttribute('href', url);
+            link.setAttribute('download', `Dashboard_Ranking_PPSU_${new Date().toISOString().split('T')[0]}.csv`);
+            link.style.visibility = 'hidden';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+
+        // Export Functions for Input Data
+        function exportInputExcel() {
+            if (!isLoggedIn) {
+                checkLoginStatus();
+                return;
+            }
+            if (employees.length === 0) {
+                alert('Tidak ada data untuk diekspor!');
+                return;
+            }
+
+            const exportData = employees.map((employee, index) => {
+                const scores = calculateScores(employee);
+                return {
+                    'No': index + 1,
+                    'Nama PPSU': employee.nama,
+                    'Kehadiran/Bulan': employee.kehadiran,
+                    'Keterlambatan (Menit)': employee.keterlambatan,
+                    'Cepat Pulang (Menit)': employee.cepatPulang,
+                    'Tidak Absen Masuk': employee.tidakAbsenMasuk,
+                    'Tidak Absen Pulang': employee.tidakAbsenPulang,
+                    'Potongan Menit': employee.potonganMenit,
+                    'Target Botol/Bulan': employee.targetBotol,
+                    'Nilai Kehadiran (%)': scores.nilaiKehadiran,
+                    'Nilai Kinerja (%)': scores.nilaiKinerja,
+                    'Nilai Perilaku (%)': employee.nilaiPerilaku,
+                    'Total Skor (%)': scores.totalSkor
+                };
+            });
+
+            const ws = XLSX.utils.json_to_sheet(exportData);
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, 'Data Input PPSU');
+            
+            const fileName = `Data_Input_PPSU_${new Date().toISOString().split('T')[0]}.xlsx`;
+            XLSX.writeFile(wb, fileName);
+        }
+
+        function exportInputCSV() {
+            if (!isLoggedIn) {
+                checkLoginStatus();
+                return;
+            }
+            if (employees.length === 0) {
+                alert('Tidak ada data untuk diekspor!');
+                return;
+            }
+
+            const headers = ['No', 'Nama PPSU', 'Kehadiran', 'Keterlambatan', 'Cepat Pulang', 'Tidak Absen Masuk', 'Tidak Absen Pulang', 'Potongan Menit', 'Target Botol', 'Nilai Kehadiran (%)', 'Nilai Kinerja (%)', 'Nilai Perilaku (%)', 'Total Skor (%)'];
+            
+            const csvContent = [
+                headers.join(','),
+                ...employees.map((employee, index) => {
+                    const scores = calculateScores(employee);
+                    return [
+                        index + 1,
+                        `"${employee.nama}"`,
+                        employee.kehadiran,
+                        employee.keterlambatan,
+                        employee.cepatPulang,
+                        employee.tidakAbsenMasuk,
+                        employee.tidakAbsenPulang,
+                        employee.potonganMenit,
+                        employee.targetBotol,
+                        scores.nilaiKehadiran,
+                        scores.nilaiKinerja,
+                        employee.nilaiPerilaku,
+                        scores.totalSkor
+                    ].join(',');
+                })
+            ].join('\n');
+
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            const url = URL.createObjectURL(blob);
+            link.setAttribute('href', url);
+            link.setAttribute('download', `Data_Input_PPSU_${new Date().toISOString().split('T')[0]}.csv`);
+            link.style.visibility = 'hidden';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+
+        // Export Functions for Performance Data
+        function exportPerformanceExcel() {
+            if (!isLoggedIn) {
+                checkLoginStatus();
+                return;
+            }
+            if (performanceData.length === 0) {
+                alert('Tidak ada data kinerja untuk diekspor!');
+                return;
+            }
+
+            const exportData = performanceData.map((performance, index) => {
+                const employee = employees.find(emp => emp.nama === performance.employeeName);
+                const targetBotol = employee ? parseFloat(employee.targetBotol) || 0 : 0;
+                const botolTercapai = parseFloat(performance.botolTercapai) || 0;
+                const persentase = targetBotol > 0 ? ((botolTercapai / targetBotol) * 100).toFixed(1) : 0;
+                const nilaiKinerja = Math.min(15, (botolTercapai / (5 * 27)) * 15) + (parseFloat(performance.kualitasKerja) / 31) * 15;
+
+                return {
+                    'No': index + 1,
+                    'Nama PPSU': performance.employeeName,
+                    'Bulan/Tahun': new Date(performance.month).toLocaleDateString('id-ID', {year: 'numeric', month: 'long'}),
+                    'Target Botol': targetBotol,
+                    'Botol Tercapai': botolTercapai,
+                    'Persentase (%)': persentase,
+                    'Kualitas Kerja': performance.kualitasKerja,
+                    'Nilai Kinerja': nilaiKinerja.toFixed(2),
+                    'Catatan': performance.catatan || '-'
+                };
+            });
+
+            const ws = XLSX.utils.json_to_sheet(exportData);
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, 'Data Kinerja PPSU');
+            
+            const fileName = `Data_Kinerja_PPSU_${new Date().toISOString().split('T')[0]}.xlsx`;
+            XLSX.writeFile(wb, fileName);
+        }
+
+        function exportPerformanceCSV() {
+            if (!isLoggedIn) {
+                checkLoginStatus();
+                return;
+            }
+            if (performanceData.length === 0) {
+                alert('Tidak ada data kinerja untuk diekspor!');
+                return;
+            }
+
+            const headers = ['No', 'Nama PPSU', 'Bulan/Tahun', 'Target Botol', 'Botol Tercapai', 'Persentase (%)', 'Kualitas Kerja', 'Nilai Kinerja', 'Catatan'];
+            
+            const csvContent = [
+                headers.join(','),
+                ...performanceData.map((performance, index) => {
+                    const employee = employees.find(emp => emp.nama === performance.employeeName);
+                    const targetBotol = employee ? parseFloat(employee.targetBotol) || 0 : 0;
+                    const botolTercapai = parseFloat(performance.botolTercapai) || 0;
+                    const persentase = targetBotol > 0 ? ((botolTercapai / targetBotol) * 100).toFixed(1) : 0;
+                    const nilaiKinerja = Math.min(15, (botolTercapai / (5 * 27)) * 15) + (parseFloat(performance.kualitasKerja) / 31) * 15;
+
+                    return [
+                        index + 1,
+                        `"${performance.employeeName}"`,
+                        `"${new Date(performance.month).toLocaleDateString('id-ID', {year: 'numeric', month: 'long'})}"`,
+                        targetBotol,
+                        botolTercapai,
+                        persentase,
+                        performance.kualitasKerja,
+                        nilaiKinerja.toFixed(2),
+                        `"${performance.catatan || '-'}"`
+                    ].join(',');
+                })
+            ].join('\n');
+
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            const url = URL.createObjectURL(blob);
+            link.setAttribute('href', url);
+            link.setAttribute('download', `Data_Kinerja_PPSU_${new Date().toISOString().split('T')[0]}.csv`);
+            link.style.visibility = 'hidden';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+
+        // Export Functions for Rekap PPSU (CSV version)
+        function exportRekapCSV() {
+            if (!isLoggedIn) {
+                checkLoginStatus();
+                return;
+            }
+            const exportData = ppsuNames.map((nama, index) => {
+                const employee = employees.find(emp => emp.nama === nama);
+                let scores = { nilaiKehadiran: '0.00', nilaiKinerja: '0.00', totalSkor: '0.00' };
+                let statusData = 'Belum Input';
+                let statusKinerja = 'Belum Ada Data';
+                
+                if (employee) {
+                    scores = calculateScores(employee);
+                    statusData = 'Sudah Input';
+                    
+                    const totalScore = parseFloat(scores.totalSkor);
+                    if (totalScore >= 80) statusKinerja = 'Sangat Baik';
+                    else if (totalScore >= 70) statusKinerja = 'Baik';
+                    else if (totalScore >= 60) statusKinerja = 'Cukup';
+                    else statusKinerja = 'Perlu Perbaikan';
+                }
+                
+                return [
+                    index + 1,
+                    `"${nama}"`,
+                    `"${statusData}"`,
+                    employee ? employee.kehadiran : '-',
+                    employee ? employee.keterlambatan : '-',
+                    employee ? employee.cepatPulang : '-',
+                    employee ? employee.targetBotol : '-',
+                    scores.nilaiKehadiran,
+                    scores.nilaiKinerja,
+                    employee ? employee.nilaiPerilaku : '0',
+                    scores.totalSkor,
+                    `"${statusKinerja}"`
+                ].join(',');
+            });
+
+            const headers = ['No', 'Nama PPSU', 'Status Data', 'Kehadiran', 'Keterlambatan', 'Cepat Pulang', 'Target Botol', 'Nilai Kehadiran (%)', 'Nilai Kinerja (%)', 'Nilai Perilaku (%)', 'Total Skor (%)', 'Status Kinerja'];
+            const csvContent = [headers.join(','), ...exportData].join('\n');
+
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            const url = URL.createObjectURL(blob);
+            link.setAttribute('href', url);
+            link.setAttribute('download', `Rekap_PPSU_PISBAR_${new Date().toISOString().split('T')[0]}.csv`);
+            link.style.visibility = 'hidden';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+
+        // Performance Book Functions
+        function updateEmployeeDropdown() {
+            const dropdown = document.getElementById('performanceEmployee');
+            dropdown.innerHTML = '<option value="">-- Pilih PPSU --</option>';
+            
+            employees.forEach(employee => {
+                const option = document.createElement('option');
+                option.value = employee.nama;
+                option.textContent = employee.nama;
+                dropdown.appendChild(option);
+            });
+        }
+
+        // Performance form submission
+        document.getElementById('performanceForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const performance = {
+                employeeName: document.getElementById('performanceEmployee').value,
+                month: document.getElementById('performanceMonth').value,
+                botolTercapai: document.getElementById('botolTercapai').value,
+                kualitasKerja: document.getElementById('kualitasKerja').value,
+                catatan: document.getElementById('catatanKinerja').value || ''
+            };
+
+            if (performanceEditingIndex >= 0) {
+                performanceData[performanceEditingIndex] = performance;
+                performanceEditingIndex = -1;
+                document.getElementById('performanceSubmitBtn').textContent = '💾 Simpan Data Kinerja';
+            } else {
+                performanceData.push(performance);
+            }
+
+            localStorage.setItem('performanceData', JSON.stringify(performanceData));
+            renderPerformanceTable();
+            renderTable(); // Update main table to reflect new performance scores
+            resetPerformanceForm();
+        });
+
+        function renderPerformanceTable() {
+            const tbody = document.getElementById('performanceTableBody');
+            tbody.innerHTML = '';
+
+            if (performanceData.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="10" class="text-center py-8 text-gray-500">Belum ada data kinerja</td></tr>';
+                return;
+            }
+
+            performanceData.forEach((performance, index) => {
+                const employee = employees.find(emp => emp.nama === performance.employeeName);
+                const targetBotol = employee ? parseFloat(employee.targetBotol) || 0 : 0;
+                const botolTercapai = parseFloat(performance.botolTercapai) || 0;
+                const persentase = targetBotol > 0 ? ((botolTercapai / targetBotol) * 100).toFixed(1) : 0;
+                
+                // Calculate performance score using the formula
+                const nilaiKinerja = Math.min(15, (botolTercapai / (5 * 27)) * 15) + (parseFloat(performance.kualitasKerja) / 31) * 15;
+                
+                const row = document.createElement('tr');
+                row.className = 'border-b hover:bg-gray-50 transition-colors';
+                
+                row.innerHTML = `
+                    <td class="px-3 py-4">${index + 1}</td>
+                    <td class="px-3 py-4 font-semibold">${performance.employeeName}</td>
+                    <td class="px-3 py-4">${new Date(performance.month).toLocaleDateString('id-ID', {year: 'numeric', month: 'long'})}</td>
+                    <td class="px-3 py-4">${targetBotol}</td>
+                    <td class="px-3 py-4 font-bold text-blue-600">${botolTercapai}</td>
+                    <td class="px-3 py-4 font-bold ${persentase >= 100 ? 'text-green-600' : persentase >= 80 ? 'text-yellow-600' : 'text-red-600'}">${persentase}%</td>
+                    <td class="px-3 py-4">${performance.kualitasKerja}</td>
+                    <td class="px-3 py-4 font-bold text-green-600">${nilaiKinerja.toFixed(2)}</td>
+                    <td class="px-3 py-4 text-sm">${performance.catatan}</td>
+                    <td class="px-3 py-4">
+                        <div class="flex space-x-1">
+                            <button onclick="editPerformance(${index})" class="bg-yellow-500 hover:bg-yellow-600 text-white px-2 py-1 rounded-lg text-xs font-medium transition-colors">✏️</button>
+                            <button onclick="deletePerformance(${index})" class="bg-red-500 hover:bg-red-600 text-white px-2 py-1 rounded-lg text-xs font-medium transition-colors">🗑️</button>
+                        </div>
+                    </td>
+                `;
+                tbody.appendChild(row);
+            });
+        }
+
+        function editPerformance(index) {
+            if (!isLoggedIn) {
+                checkLoginStatus();
+                return;
+            }
+            const performance = performanceData[index];
+            document.getElementById('performanceEmployee').value = performance.employeeName;
+            document.getElementById('performanceMonth').value = performance.month;
+            document.getElementById('botolTercapai').value = performance.botolTercapai;
+            document.getElementById('kualitasKerja').value = performance.kualitasKerja;
+            document.getElementById('catatanKinerja').value = performance.catatan;
+            
+            performanceEditingIndex = index;
+            document.getElementById('performanceSubmitBtn').textContent = '✅ Update Data Kinerja';
+        }
+
+        function deletePerformance(index) {
+            if (!isLoggedIn) {
+                checkLoginStatus();
+                return;
+            }
+            if (confirm('Apakah Anda yakin ingin menghapus data kinerja ini?')) {
+                performanceData.splice(index, 1);
+                localStorage.setItem('performanceData', JSON.stringify(performanceData));
+                renderPerformanceTable();
+                renderTable(); // Update main table
+            }
+        }
+
+        function resetPerformanceForm() {
+            if (!isLoggedIn) {
+                checkLoginStatus();
+                return;
+            }
+            document.getElementById('performanceForm').reset();
+            performanceEditingIndex = -1;
+            document.getElementById('performanceSubmitBtn').textContent = '💾 Simpan Data Kinerja';
+        }
+
+        // Rekap PPSU Functions
+        function renderRekapPPSU() {
+            renderPPSUCards();
+            renderRekapTable();
+        }
+
+        function renderPPSUCards() {
+            const container = document.getElementById('ppsuCardsContainer');
+            container.innerHTML = '';
+
+            filteredPPSU.forEach((nama, index) => {
+                const employee = employees.find(emp => emp.nama === nama);
+                let cardClass = 'bg-gradient-to-br from-gray-100 to-gray-200 border-gray-300';
+                let statusText = 'Belum Ada Data';
+                let statusClass = 'bg-gray-100 text-gray-800';
+                let scores = { nilaiKehadiran: '0.00', nilaiKinerja: '0.00', totalSkor: '0.00' };
+
+                if (employee) {
+                    scores = calculateScores(employee);
+                    const totalScore = parseFloat(scores.totalSkor);
+                    
+                    if (totalScore >= 80) {
+                        cardClass = 'bg-gradient-to-br from-green-50 to-green-100 border-green-300';
+                        statusText = 'Sangat Baik';
+                        statusClass = 'bg-green-100 text-green-800';
+                    } else if (totalScore >= 70) {
+                        cardClass = 'bg-gradient-to-br from-blue-50 to-blue-100 border-blue-300';
+                        statusText = 'Baik';
+                        statusClass = 'bg-blue-100 text-blue-800';
+                    } else if (totalScore >= 60) {
+                        cardClass = 'bg-gradient-to-br from-yellow-50 to-yellow-100 border-yellow-300';
+                        statusText = 'Cukup';
+                        statusClass = 'bg-yellow-100 text-yellow-800';
+                    } else {
+                        cardClass = 'bg-gradient-to-br from-red-50 to-red-100 border-red-300';
+                        statusText = 'Perlu Perbaikan';
+                        statusClass = 'bg-red-100 text-red-800';
+                    }
+                }
+
+                const card = document.createElement('div');
+                card.className = `${cardClass} border-2 rounded-2xl p-4 lg:p-6 transition-all hover:shadow-xl cursor-pointer card-hover`;
+                card.onclick = () => employee ? editEmployee(employees.indexOf(employee)) : quickAddPPSU(nama);
+                
+                card.innerHTML = `
+                    <div class="flex justify-between items-start mb-4">
+                        <h3 class="font-bold text-gray-800 text-sm lg:text-base leading-tight">${nama}</h3>
+                        <span class="px-2 py-1 rounded-full text-xs font-bold ${statusClass}">${statusText}</span>
+                    </div>
+                    <div class="space-y-3">
+                        <div class="flex justify-between text-xs lg:text-sm">
+                            <span class="text-gray-600 font-medium">📅 Kehadiran:</span>
+                            <span class="font-bold text-blue-600">${scores.nilaiKehadiran}%</span>
+                        </div>
+                        <div class="flex justify-between text-xs lg:text-sm">
+                            <span class="text-gray-600 font-medium">🎯 Kinerja:</span>
+                            <span class="font-bold text-green-600">${scores.nilaiKinerja}%</span>
+                        </div>
+                        <div class="flex justify-between text-xs lg:text-sm">
+                            <span class="text-gray-600 font-medium">⭐ Perilaku:</span>
+                            <span class="font-bold text-purple-600">${employee ? employee.nilaiPerilaku : '0'}%</span>
+                        </div>
+                        <hr class="my-3 border-gray-300">
+                        <div class="flex justify-between text-sm lg:text-base font-bold">
+                            <span class="text-gray-700">🏆 Total:</span>
+                            <span class="text-orange-600 text-lg">${scores.totalSkor}%</span>
+                        </div>
+                    </div>
+                    <div class="mt-4 text-center">
+                        <button class="w-full text-xs lg:text-sm px-4 py-2 rounded-xl ${employee ? 'bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white' : 'bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white'} transition-all font-bold shadow-lg">
+                            ${employee ? '✏️ Edit Data' : '➕ Input Data'}
+                        </button>
+                    </div>
+                `;
+                
+                container.appendChild(card);
+            });
+        }
+
+        function renderRekapTable() {
+            const tbody = document.getElementById('rekapTableBody');
+            tbody.innerHTML = '';
+
+            filteredPPSU.forEach((nama, index) => {
+                const employee = employees.find(emp => emp.nama === nama);
+                let statusData = 'Belum Input';
+                let statusDataClass = 'bg-gray-100 text-gray-800';
+                let statusKinerja = 'Belum Ada Data';
+                let statusKinerjaClass = 'bg-gray-100 text-gray-800';
+                let scores = { nilaiKehadiran: '0.00', nilaiKinerja: '0.00', totalSkor: '0.00' };
+                let kehadiran = '-';
+
+                if (employee) {
+                    statusData = 'Sudah Input';
+                    statusDataClass = 'bg-green-100 text-green-800';
+                    scores = calculateScores(employee);
+                    kehadiran = employee.kehadiran;
+                    
+                    const totalScore = parseFloat(scores.totalSkor);
+                    if (totalScore >= 80) {
+                        statusKinerja = 'Sangat Baik';
+                        statusKinerjaClass = 'bg-green-100 text-green-800';
+                    } else if (totalScore >= 70) {
+                        statusKinerja = 'Baik';
+                        statusKinerjaClass = 'bg-blue-100 text-blue-800';
+                    } else if (totalScore >= 60) {
+                        statusKinerja = 'Cukup';
+                        statusKinerjaClass = 'bg-yellow-100 text-yellow-800';
+                    } else {
+                        statusKinerja = 'Perlu Perbaikan';
+                        statusKinerjaClass = 'bg-red-100 text-red-800';
+                    }
+                }
+
+                const row = document.createElement('tr');
+                row.className = 'border-b hover:bg-gray-50 transition-colors';
+                
+                row.innerHTML = `
+                    <td class="px-3 lg:px-4 py-4">${index + 1}</td>
+                    <td class="px-3 lg:px-4 py-4 font-semibold">${nama}</td>
+                    <td class="px-3 lg:px-4 py-4">
+                        <span class="px-2 py-1 rounded-full text-xs font-bold ${statusDataClass}">${statusData}</span>
+                    </td>
+                    <td class="px-3 lg:px-4 py-4">${kehadiran}</td>
+                    <td class="px-3 lg:px-4 py-4 font-bold text-blue-600">${scores.nilaiKehadiran}%</td>
+                    <td class="px-3 lg:px-4 py-4 font-bold text-green-600">${scores.nilaiKinerja}%</td>
+                    <td class="px-3 lg:px-4 py-4 font-bold text-purple-600">${employee ? employee.nilaiPerilaku : '0'}%</td>
+                    <td class="px-3 lg:px-4 py-4 font-bold text-orange-600 text-lg">${scores.totalSkor}%</td>
+                    <td class="px-3 lg:px-4 py-4">
+                        <span class="px-2 py-1 rounded-full text-xs font-bold ${statusKinerjaClass}">${statusKinerja}</span>
+                    </td>
+                    <td class="px-3 lg:px-4 py-4">
+                        ${employee ? 
+                            `<button onclick="editEmployee(${employees.indexOf(employee)})" class="bg-gradient-to-r from-yellow-500 to-yellow-600 hover:from-yellow-600 hover:to-yellow-700 text-white px-3 py-1 rounded-lg text-xs font-bold transition-all">✏️ Edit</button>` :
+                            `<button onclick="quickAddPPSU('${nama}')" class="bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white px-3 py-1 rounded-lg text-xs font-bold transition-all">➕ Input</button>`
+                        }
+                    </td>
+                `;
+                tbody.appendChild(row);
+            });
+        }
+
+        function updateRekapStats() {
+            const totalPPSU = ppsuNames.length;
+            const inputPPSU = employees.length;
+            const belumInput = totalPPSU - inputPPSU;
+            
+            let totalScore = 0;
+            let needImprovement = 0;
+            
+            employees.forEach(employee => {
+                const scores = calculateScores(employee);
+                const score = parseFloat(scores.totalSkor);
+                totalScore += score;
+                if (score < 60) needImprovement++;
+            });
+            
+            const avgScore = inputPPSU > 0 ? (totalScore / inputPPSU).toFixed(1) : 0;
+
+            document.getElementById('totalPPSUCount').textContent = totalPPSU;
+            document.getElementById('inputPPSUCount').textContent = inputPPSU;
+            document.getElementById('belumInputCount').textContent = belumInput;
+            document.getElementById('avgScoreAll').textContent = avgScore + '%';
+            document.getElementById('needImprovementCount').textContent = needImprovement;
+            
+            // Update header total
+            const headerTotal = document.getElementById('headerTotalPPSU');
+            if (headerTotal) headerTotal.textContent = totalPPSU;
+        }
+
+        function filterPPSU() {
+            const searchTerm = document.getElementById('searchPPSU').value.toLowerCase();
+            const statusFilter = document.getElementById('filterStatus').value;
+            
+            filteredPPSU = ppsuNames.filter(nama => {
+                const matchesSearch = nama.toLowerCase().includes(searchTerm);
+                
+                if (!statusFilter) return matchesSearch;
+                
+                const employee = employees.find(emp => emp.nama === nama);
+                
+                if (statusFilter === 'Belum Ada Data') {
+                    return matchesSearch && !employee;
+                }
+                
+                if (!employee) return false;
+                
+                const scores = calculateScores(employee);
+                const totalScore = parseFloat(scores.totalSkor);
+                
+                let matchesStatus = false;
+                if (statusFilter === 'Sangat Baik' && totalScore >= 80) matchesStatus = true;
+                else if (statusFilter === 'Baik' && totalScore >= 70 && totalScore < 80) matchesStatus = true;
+                else if (statusFilter === 'Cukup' && totalScore >= 60 && totalScore < 70) matchesStatus = true;
+                else if (statusFilter === 'Perlu Perbaikan' && totalScore < 60) matchesStatus = true;
+                
+                return matchesSearch && matchesStatus;
+            });
+            
+            renderRekapPPSU();
+        }
+
+        function sortPPSU() {
+            const sortBy = document.getElementById('sortBy').value;
+            
+            filteredPPSU.sort((a, b) => {
+                if (sortBy === 'nama') {
+                    return a.localeCompare(b);
+                }
+                
+                const empA = employees.find(emp => emp.nama === a);
+                const empB = employees.find(emp => emp.nama === b);
+                
+                if (!empA && !empB) return 0;
+                if (!empA) return 1;
+                if (!empB) return -1;
+                
+                const scoresA = calculateScores(empA);
+                const scoresB = calculateScores(empB);
+                
+                if (sortBy === 'skor') {
+                    return parseFloat(scoresB.totalSkor) - parseFloat(scoresA.totalSkor);
+                } else if (sortBy === 'kehadiran') {
+                    return parseFloat(scoresB.nilaiKehadiran) - parseFloat(scoresA.nilaiKehadiran);
+                } else if (sortBy === 'kinerja') {
+                    return parseFloat(scoresB.nilaiKinerja) - parseFloat(scoresA.nilaiKinerja);
+                } else if (sortBy === 'perilaku') {
+                    return parseFloat(empB.nilaiPerilaku) - parseFloat(empA.nilaiPerilaku);
+                }
+                
+                return 0;
+            });
+            
+            renderRekapPPSU();
+        }
+
+        function quickAddPPSU(nama) {
+            if (!isLoggedIn) {
+                checkLoginStatus();
+                return;
+            }
+            document.getElementById('nama').value = nama;
+            showTab('input');
+            document.getElementById('nama').focus();
+        }
+
+        function generateAllPPSU() {
+            if (!isLoggedIn) {
+                checkLoginStatus();
+                return;
+            }
+            if (confirm('Apakah Anda yakin ingin generate data sample untuk semua PPSU yang belum ada datanya?')) {
+                ppsuNames.forEach(nama => {
+                    const existing = employees.find(emp => emp.nama === nama);
+                    if (!existing) {
+                        const sampleEmployee = {
+                            nama: nama,
+                            kehadiran: Math.floor(Math.random() * 5) + 23, // 23-27
+                            keterlambatan: Math.floor(Math.random() * 60), // 0-60 menit
+                            cepatPulang: Math.floor(Math.random() * 30), // 0-30 menit
+                            tidakAbsenMasuk: Math.floor(Math.random() * 3), // 0-2
+                            tidakAbsenPulang: Math.floor(Math.random() * 3), // 0-2
+                            potonganMenit: Math.floor(Math.random() * 120), // 0-120 menit
+                            targetBotol: Math.floor(Math.random() * 50) + 100, // 100-150
+                            nilaiPerilaku: (Math.random() * 5 + 15).toFixed(1) // 15-20
+                        };
+                        employees.push(sampleEmployee);
+                        
+                        // Generate sample performance data
+                        const samplePerformance = {
+                            employeeName: nama,
+                            month: '2024-01',
+                            botolTercapai: Math.floor(Math.random() * 40) + 80, // 80-120
+                            kualitasKerja: (Math.random() * 10 + 20).toFixed(1), // 20-30
+                            catatan: 'Data sample untuk testing'
+                        };
+                        performanceData.push(samplePerformance);
+                    }
+                });
+                
+                localStorage.setItem('employees', JSON.stringify(employees));
+                localStorage.setItem('performanceData', JSON.stringify(performanceData));
+                
+                renderTable();
+                renderRekapPPSU();
+                updateRekapStats();
+                
+                alert('Data sample berhasil digenerate untuk semua PPSU!');
+            }
+        }
+
+        function exportRekapExcel() {
+            if (!isLoggedIn) {
+                checkLoginStatus();
+                return;
+            }
+            const exportData = ppsuNames.map((nama, index) => {
+                const employee = employees.find(emp => emp.nama === nama);
+                let scores = { nilaiKehadiran: '0.00', nilaiKinerja: '0.00', totalSkor: '0.00' };
+                let statusData = 'Belum Input';
+                let statusKinerja = 'Belum Ada Data';
+                
+                if (employee) {
+                    scores = calculateScores(employee);
+                    statusData = 'Sudah Input';
+                    
+                    const totalScore = parseFloat(scores.totalSkor);
+                    if (totalScore >= 80) statusKinerja = 'Sangat Baik';
+                    else if (totalScore >= 70) statusKinerja = 'Baik';
+                    else if (totalScore >= 60) statusKinerja = 'Cukup';
+                    else statusKinerja = 'Perlu Perbaikan';
+                }
+                
+                return {
+                    'No': index + 1,
+                    'Nama PPSU': nama,
+                    'Status Data': statusData,
+                    'Kehadiran/Bulan': employee ? employee.kehadiran : '-',
+                    'Keterlambatan (Menit)': employee ? employee.keterlambatan : '-',
+                    'Cepat Pulang (Menit)': employee ? employee.cepatPulang : '-',
+                    'Target Botol': employee ? employee.targetBotol : '-',
+                    'Nilai Kehadiran (%)': scores.nilaiKehadiran,
+                    'Nilai Kinerja (%)': scores.nilaiKinerja,
+                    'Nilai Perilaku (%)': employee ? employee.nilaiPerilaku : '0',
+                    'Total Skor (%)': scores.totalSkor,
+                    'Status Kinerja': statusKinerja
+                };
+            });
+
+            const ws = XLSX.utils.json_to_sheet(exportData);
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, 'Rekap PPSU PISBAR');
+            
+            const fileName = `Rekap_PPSU_PISBAR_${new Date().toISOString().split('T')[0]}.xlsx`;
+            XLSX.writeFile(wb, fileName);
+        }
+
+        // Initialize
+        checkLoginStatus(); // Check login status
+        showTab('dashboard'); // Always show dashboard first (public access)
+        
+        // Initialize data for dashboard
+        renderTable();
+        updateDashboard();
+        renderRekapPPSU();
+        updateRekapStats();
+    </script>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'971f1db2564035f2',t:'MTc1NTY2MzgxMy4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</html>
